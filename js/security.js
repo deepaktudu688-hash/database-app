@@ -1,0 +1,9 @@
+import { all } from "./storage.js";
+import { currentUser } from "./auth.js";
+
+export async function renderSecurity(el, { esc }) {
+  const user = await currentUser();
+  const users = await all("users");
+  const audit = await all("audit");
+  el.innerHTML = `<div class="toolbar"><div><div class="muted">TRUST CENTER</div><h1 style="margin:4px 0">Security center</h1><p class="muted">Protection and privacy controls for this local workspace.</p></div></div><div class="grid"><div class="card security-status"><span class="status-pill active"><span></span>ENABLED</span><h3>Local authentication</h3><p class="muted">${users.length} account(s) configured. Passwords are stored as Web Crypto hashes.</p></div><div class="card security-status"><span class="status-pill active"><span></span>ACTIVE</span><h3>Current session</h3><p class="muted">Signed in as <strong>${esc(user?.username || "Unknown")}</strong> with ${esc(user?.role || "VIEWER")} access.</p></div><div class="card security-status"><span class="status-pill active"><span></span>ENABLED</span><h3>Audit logging</h3><p class="muted">${audit.length} security and workspace event(s) recorded locally.</p></div></div><div class="card security-advisory"><span class="badge">IMPORTANT</span><h3>Offline security boundary</h3><p class="muted">This browser application is designed for local and educational database management. IndexedDB and LocalStorage are controlled by the browser profile and should not be treated as enterprise-grade isolation. Use device encryption, browser profiles, operating-system access controls, and regular backups for sensitive data.</p><p class="muted">Google/Gmail authentication, centralized authorization, and multi-device collaboration require a hosted identity and backend service. They are intentionally not simulated in offline mode.</p></div>`;
+}

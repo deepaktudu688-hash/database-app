@@ -1,0 +1,13 @@
+import { all } from "./storage.js";
+
+export async function renderReports(el, { databaseId, esc }) {
+  const database = (await all("databases")).find((item) => item.id === databaseId);
+  const tables = (await all("tables")).filter((table) => table.databaseId === databaseId);
+  const rows = await all("rows");
+  const relationships = (await all("relationships")).filter((item) => item.databaseId === databaseId);
+  const views = (await all("views")).filter((item) => item.databaseId === databaseId);
+  const indexes = (await all("indexes")).filter((item) => item.databaseId === databaseId);
+  const databaseRows = rows.filter((row) => tables.some((table) => table.id === row.tableId));
+  el.innerHTML = `<div class="toolbar"><div><div class="muted">DATABASE INSIGHTS</div><h1 style="margin:4px 0">Reports</h1><p class="muted">A live operational summary of ${esc(database?.name || "your workspace")}.</p></div><button class="btn" id="print-report">Print / PDF</button></div><div class="grid"><div class="card"><div class="metric">${tables.length}</div><div class="metric-label">Tables</div></div><div class="card"><div class="metric">${databaseRows.length}</div><div class="metric-label">Total rows</div></div><div class="card"><div class="metric">${tables.reduce((total, table) => total + table.columns.length, 0)}</div><div class="metric-label">Columns</div></div><div class="card"><div class="metric">${relationships.length}</div><div class="metric-label">Relationships</div></div><div class="card"><div class="metric">${views.length}</div><div class="metric-label">Saved views</div></div><div class="card"><div class="metric">${indexes.length}</div><div class="metric-label">Indexes</div></div></div><div class="section"><div class="section-title"><h3>Table activity</h3></div><div class="card report-table"><table class="data-table"><thead><tr><th>Table</th><th>Rows</th><th>Columns</th><th>Share of records</th></tr></thead><tbody>${tables.map((table) => { const count = databaseRows.filter((row) => row.tableId === table.id).length, share = databaseRows.length ? Math.round(count / databaseRows.length * 100) : 0; return `<tr><td><strong>${esc(table.name)}</strong></td><td>${count}</td><td>${table.columns.length}</td><td><div class="report-bar"><span style="width:${share}%"></span></div><small>${share}%</small></td></tr>`; }).join("") || '<tr><td colspan="4" class="empty">Create a table to generate a report.</td></tr>'}</tbody></table></div></div><div class="card report-note"><strong>Local reporting</strong><p class="muted">This report is calculated from the current IndexedDB workspace. Use Print / PDF to save a portable copy from your browser.</p></div>`;
+  document.querySelector("#print-report").onclick = () => window.print();
+}
